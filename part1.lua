@@ -1,56 +1,26 @@
---===================================================================================--
---               DUNGEON HEROES AUTOMATION MATRIX - PART 1 OF 3                      --
---===================================================================================--
-
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local CoreGui = game:GetService("CoreGui")
-
 local LocalPlayer = Players.LocalPlayer
 local CONFIG_FILE = "DungeonHeroes_Perfect_V4.json"
 
-if _G.OPSuite and _G.OPSuite.Gui then 
-    _G.OPSuite.Gui:Destroy() 
+if getgenv().OPSuite and getgenv().OPSuite.Gui then 
+    getgenv().OPSuite.Gui:Destroy() 
 end
 
-_G.OPSuite = {}
-_G.OPSuite.Config = {
-    TweenSpeedHack = false,
-    MaxTweenSpeed = 100,
-    WalkSpeed300 = false,
-    EnemyTrackingESP = false,
-    AutoGetMobs = false,
-    AutoAuraKillMobs = false,
-    AutoGetBoss = false,
-    AutoKillAuraBoss = false,
-    AutoClickSpecials = false,
-    AutoPlayAgain = false,
-    AutoPlayNextDifficulty = false,
-    ClickDelayMS = 1
+getgenv().OPSuite = {}
+getgenv().OPSuite.Config = {
+    TweenSpeedHack = false, MaxTweenSpeed = 100, WalkSpeed300 = false, EnemyTrackingESP = false,
+    AutoGetMobs = false, AutoAuraKillMobs = false, AutoGetBoss = false, AutoKillAuraBoss = false,
+    AutoClickSpecials = false, AutoPlayAgain = false, AutoPlayNextDifficulty = false, ClickDelayMS = 1
 }
-
-local function saveSettings()
-    if writefile then
-        pcall(function() writefile(CONFIG_FILE, HttpService:JSONEncode(_G.OPSuite.Config)) end)
-    end
-end
-
-local function loadSettings()
-    if isfile and isfile(CONFIG_FILE) and readfile then
-        local success, decoded = pcall(function() return HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
-        if success and type(decoded) == "table" then
-            for k, v in pairs(decoded) do _G.OPSuite.Config[k] = v end
-        end
-    end
-end
-loadSettings()
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "OP_Perfect_Suite_V4"
 ScreenGui.ResetOnSpawn = false
 local pSuccess = pcall(function() ScreenGui.Parent = CoreGui end)
 if not pSuccess then pcall(function() ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end) end
-_G.OPSuite.Gui = ScreenGui
+getgenv().OPSuite.Gui = ScreenGui
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 340, 0, 480)
@@ -88,7 +58,7 @@ Scroll.CanvasSize = UDim2.new(0, 0, 0, 600)
 Scroll.ScrollBarThickness = 5
 Scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 0, 85)
 Scroll.Parent = MainFrame
-_G.OPSuite.ScrollContainer = Scroll
+getgenv().OPSuite.ScrollContainer = Scroll
 
 local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.Padding = UDim.new(0, 6)
@@ -106,7 +76,7 @@ LogScroll.Parent = MainFrame
 local LogBox = Instance.new("TextLabel")
 LogBox.Size = UDim2.new(1, -10, 1, 0)
 LogBox.BackgroundTransparency = 1
-LogBox.Text = "[PART 1 SUCCESSFUL - PROCEED TO RUN PART 2]"
+LogBox.Text = "[PART 1 LOGGED SUCCESSFULLY - READY FOR PART 2]"
 LogBox.TextColor3 = Color3.fromRGB(0, 255, 100)
 LogBox.TextSize = 11
 LogBox.Font = Enum.Font.Code
@@ -114,22 +84,22 @@ LogBox.TextXAlignment = Enum.TextXAlignment.Left
 LogBox.TextYAlignment = Enum.TextYAlignment.Top
 LogBox.TextWrapped = true
 LogBox.Parent = LogScroll
-_G.LogBox = LogBox
+getgenv().LogBox = LogBox
 
-function _G.OPSuite.createToggle(text, configKey)
+function getgenv().OPSuite.createToggle(text, configKey)
     local Button = Instance.new("TextButton")
     Button.Size = UDim2.new(1, -10, 0, 36)
     Button.BorderSizePixel = 0
     Button.Font = Enum.Font.SourceSansSemiBold
     Button.TextSize = 13
-    Button.Parent = _G.OPSuite.ScrollContainer
+    Button.Parent = getgenv().OPSuite.ScrollContainer
     
     local Corner = Instance.new("UICorner")
     Corner.CornerRadius = UDim.new(0, 4)
     Corner.Parent = Button
     
     local function refresh()
-        if _G.OPSuite.Config[configKey] then
+        if getgenv().OPSuite.Config[configKey] then
             Button.BackgroundColor3 = Color3.fromRGB(255, 0, 85)
             Button.Text = text .. " : ACTIVE"
             Button.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -143,11 +113,9 @@ function _G.OPSuite.createToggle(text, configKey)
     
     Button.MouseButton1Click:Connect(function()
         pcall(function()
-            _G.OPSuite.Config[configKey] = not _G.OPSuite.Config[configKey]
+            getgenv().OPSuite.Config[configKey] = not getgenv().OPSuite.Config[configKey]
             refresh()
-            saveSettings()
         end)
     end)
 end
 
-print("[PART 1] Core framework online.")
