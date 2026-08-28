@@ -1,8 +1,4 @@
---===================================================================================--
---               DUNGEON HEROES AUTOMATION MATRIX - PART 2 OF 3                      --
---===================================================================================--
-
-if not _G.OPSuite or not _G.OPSuite.Config then
+if not getgenv().OPSuite or not getgenv().OPSuite.Config then
     warn("CRITICAL ERROR: Run Part 1 before running Part 2!")
     return
 end
@@ -11,10 +7,9 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
-local Config = _G.OPSuite.Config
+local Config = getgenv().OPSuite.Config
 
--- Target Finder Engine
-function _G.OPSuite.findUltimateTarget(lookForBoss)
+function getgenv().OPSuite.findUltimateTarget(lookForBoss)
     local bestTarget = nil
     local shortestDistance = math.huge
     local char = LocalPlayer.Character
@@ -30,10 +25,7 @@ function _G.OPSuite.findUltimateTarget(lookForBoss)
                     local isBoss = obj:SetAttribute("Boss") or string.find(string.lower(obj.Name), "boss")
                     if (lookForBoss and isBoss) or (not lookForBoss and not isBoss) then
                         local dist = (obj.HumanoidRootPart.Position - myRoot.Position).Magnitude
-                        if dist < shortestDistance then 
-                            shortestDistance = dist 
-                            bestTarget = obj 
-                        end
+                        if dist < shortestDistance then shortestDistance = dist bestTarget = obj end
                     end
                 end
             end
@@ -47,10 +39,7 @@ function _G.OPSuite.findUltimateTarget(lookForBoss)
                     local isBoss = obj:SetAttribute("Boss") or string.find(string.lower(obj.Name), "boss")
                     if (lookForBoss and isBoss) or (not lookForBoss and not isBoss) then
                         local dist = (obj.HumanoidRootPart.Position - myRoot.Position).Magnitude
-                        if dist < shortestDistance then 
-                            shortestDistance = dist 
-                            bestTarget = obj 
-                        end
+                        if dist < shortestDistance then shortestDistance = dist bestTarget = obj end
                     end
                 end
             end
@@ -59,7 +48,6 @@ function _G.OPSuite.findUltimateTarget(lookForBoss)
     return bestTarget
 end
 
--- Walkspeed System Loop
 task.spawn(function()
     while task.wait(0.2) do
         pcall(function()
@@ -71,8 +59,7 @@ task.spawn(function()
     end
 end)
 
--- Teleport Engine Vector Offset 
-function _G.OPSuite.teleportCombatOffset(pos)
+function getgenv().OPSuite.teleportCombatOffset(pos)
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     local root = char.HumanoidRootPart
@@ -90,5 +77,4 @@ function _G.OPSuite.teleportCombatOffset(pos)
     end
 end
 
-if _G.LogBox then _G.LogBox.Text = "[PART 2 SUCCESSFUL - PROCEED TO RUN PART 3]" end
-print("[PART 2] Target engines loaded successfully.")
+if getgenv().LogBox then getgenv().LogBox.Text = "[PART 2 LOGGED SUCCESSFULLY - READY FOR PART 3]" end
