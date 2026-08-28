@@ -1,80 +1,120 @@
-if not getgenv().OPSuite or not getgenv().OPSuite.Config then
-    warn("CRITICAL ERROR: Run Part 1 before running Part 2!")
-    return
-end
+-- Part 2: Combat Automation, 1ms Skills, Screen Toggles, and Commands Interface
+if _G.DungeonMasterPart2 then print("Part 2 already running!") return end
+_G.DungeonMasterPart2 = true
 
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local TweenService = game:GetService("TweenService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local LocalPlayer = Players.LocalPlayer
-local Config = getgenv().OPSuite.Config
 
-function getgenv().OPSuite.findUltimateTarget(lookForBoss)
-    local bestTarget = nil
-    local shortestDistance = math.huge
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
-    local myRoot = char.HumanoidRootPart
+-- Wait briefly for Part 1 to boot up dependencies
+repeat task.wait(0.5) until _G.Config and _G.TweenTo
 
-    local folders = {"Enemies", "Mobs", "Monsters", "Baddies", "NPCs"}
-    for _, folderName in ipairs(folders) do
-        local directory = Workspace:FindFirstChild(folderName)
-        if directory then
-            for _, obj in pairs(directory:GetChildren()) do
-                if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") and obj.Humanoid.Health > 0 then
-                    local isBoss = obj:SetAttribute("Boss") or string.find(string.lower(obj.Name), "boss")
-                    if (lookForBoss and isBoss) or (not lookForBoss and not isBoss) then
-                        local dist = (obj.HumanoidRootPart.Position - myRoot.Position).Magnitude
-                        if dist < shortestDistance then shortestDistance = dist bestTarget = obj end
-                    end
-                end
-            end
-        end
-    end
-
-    if not bestTarget then
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") and obj.Humanoid.Health > 0 then
-                if obj ~= char and not Players:GetPlayerFromCharacter(obj) then
-                    local isBoss = obj:SetAttribute("Boss") or string.find(string.lower(obj.Name), "boss")
-                    if (lookForBoss and isBoss) or (not lookForBoss and not isBoss) then
-                        local dist = (obj.HumanoidRootPart.Position - myRoot.Position).Magnitude
-                        if dist < shortestDistance then shortestDistance = dist bestTarget = obj end
-                    end
-                end
-            end
-        end
-    end
-    return bestTarget
-end
-
+-- --- WORKER PIPELINE 1: COMBAT MOTION & KILL AURA ENGINE ---
 task.spawn(function()
-    while task.wait(0.2) do
-        pcall(function()
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("Humanoid") and Config.WalkSpeed300 then
-                char.Humanoid.WalkSpeed = 300
+    while true do
+        task.wait()
+        local char = _G.GetCharacter()
+        local tool = char and char:FindFirstChildOfClass("Tool")
+        
+        local target = nil
+        if _G.Config.AutoKillBosses then target = _G.GetClosestEnemy(true) end
+        if not target and _G.Config.AutoKillMobs then target = _G.GetClosestEnemy(false) end
+        
+        if target and char and char:FindFirstChild("HumanoidRootPart") then
+            local enemyRoot = target:FindFirstChild("HumanoidRootPart")
+            if enemyRoot then
+                _G.TweenTo(enemyRoot.Position + Vector3.new(0, 4, 0))
+                
+                local distance = (char.HumanoidRootPart.Position - enemyRoot.Position).Magnitude
+                if distance <= _G.Config.KillAuraRange and tool then
+                    tool:Activate()
+                    if firetouchinterest then
+                        for _, part in pairs(target:GetChildren()) do
+                            if part:IsA("BasePart") then
+                                firetouchinterest(tool.Handle, part, 0)
+                                task.wait()
+                                firetouchinterest(tool.Handle, part, 1)
+                            end
+                        end
+                    end
+                end
             end
-        end)
+        end
     end
 end)
 
-function getgenv().OPSuite.teleportCombatOffset(pos)
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-    
-    if Config.TweenSpeedHack then
-        local dist = (pos - root.Position).Magnitude
-        local duration = dist / math.max(Config.MaxTweenSpeed, 1)
-        char.Humanoid.PlatformStand = true
-        local tween = TweenService:Create(root, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = CFrame.new(pos)})
-        tween:Play()
-        tween.Completed:Wait()
-        char.Humanoid.PlatformStand = false
-    else
-        root.CFrame = CFrame.new(pos)
+-- --- WORKER PIPELINE 2: 1-MILLISECOND ABILITY SPAM ENGINE (E, R, F, X, C) ---
+local ActionKeys = {"E", "R", "F", "X", "C"}
+task.spawn(function()
+    while true do
+        task.wait(0.001)
+        if _G.Config.AutoClickSpecials then
+            for _, keyStr in ipairs(ActionKeys) do
+                local keyCode = Enum.KeyCode[keyStr]
+                VirtualInputManager:SendKeyEvent(true, keyCode, false, game)
+                task.wait(0.0005)
+                VirtualInputManager:SendKeyEvent(false, keyCode, false, game)
+            end
+        end
+    end
+end)
+
+-- --- WORKER PIPELINE 3: STAGE CONTINUATION & UI AUTOMATION ---
+task.spawn(function()
+    while true do
+        task.wait(1)
+        local localGui = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+        if localGui then
+            for _, element in pairs(localGui:GetDescendants()) do
+                if element:IsA("TextButton") and element.Visible then
+                    local text = string.lower(element.Text)
+                    if _G.Config.AutoPlayAgain and (string.find(text, "again") or string.find(text, "retry")) then
+                        firesignal(element.MouseButton1Click)
+                    elseif _G.Config.AutoNextDifficulty and (string.find(text, "next") or string.find(text, "difficult")) then
+                        firesignal(element.MouseButton1Click)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- --- INTEGRATED CHAT-COMMAND CONFIGURATION MATRIX ---
+local function ProcessCommand(msg)
+    local args = string.split(string.lower(msg), " ")
+    if args[1] == "/mobs" then
+        _G.Config.AutoKillMobs = (args[2] == "on")
+        _G.SaveConfig()
+        print("AutoKillMobs: " .. tostring(_G.Config.AutoKillMobs))
+    elseif args[1] == "/boss" then
+        _G.Config.AutoKillBosses = (args[2] == "on")
+        _G.SaveConfig()
+        print("AutoKillBosses: " .. tostring(_G.Config.AutoKillBosses))
+    elseif args[1] == "/speed" then
+        local targetVal = tonumber(args[2])
+        if targetVal then
+            _G.Config.TweenSpeed = math.clamp(targetVal, 1, 100)
+            _G.SaveConfig()
+            print("Movement Speed: " .. _G.Config.TweenSpeed)
+        end
+    elseif args[1] == "/skills" then
+        _G.Config.AutoClickSpecials = (args[2] == "on")
+        _G.SaveConfig()
+        print("Skills Macro: " .. tostring(_G.Config.AutoClickSpecials))
+    elseif args[1] == "/esp" then
+        _G.Config.ESPEnabled = (args[2] == "on")
+        _G.SaveConfig()
+        print("Target ESP: " .. tostring(_G.Config.ESPEnabled))
+    elseif args[1] == "/retry" then
+        _G.Config.AutoPlayAgain = (args[2] == "on")
+        _G.SaveConfig()
+        print("Auto Retry: " .. tostring(_G.Config.AutoPlayAgain))
+    elseif args[1] == "/next" then
+        _G.Config.AutoNextDifficulty = (args[2] == "on")
+        _G.SaveConfig()
+        print("Auto Next Difficulty: " .. tostring(_G.Config.AutoNextDifficulty))
     end
 end
 
-if getgenv().LogBox then getgenv().LogBox.Text = "[PART 2 LOGGED SUCCESSFULLY - READY FOR PART 3]" end
+LocalPlayer.Chatted:Connect(ProcessCommand)
+print("[PART 2 SYSTEM] Automation loops active. Script fully deployed!")
