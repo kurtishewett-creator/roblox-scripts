@@ -1,121 +1,139 @@
+-- Part 1: Configuration, Data Storage, ESP Engine, and Velocity Core
+if _G.DungeonMasterPart1 then print("Part 1 already running!") return end
+_G.DungeonMasterPart1 = true
+
+-- --- ENGINES & SERVICES ---
 local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
-local CoreGui = game:GetService("CoreGui")
+
 local LocalPlayer = Players.LocalPlayer
-local CONFIG_FILE = "DungeonHeroes_Perfect_V4.json"
+local Camera = Workspace.CurrentCamera
+local FILE_NAME = "DungeonHeroes_MasterConfig.json"
 
-if getgenv().OPSuite and getgenv().OPSuite.Gui then 
-    getgenv().OPSuite.Gui:Destroy() 
-end
-
-getgenv().OPSuite = {}
-getgenv().OPSuite.Config = {
-    TweenSpeedHack = false, MaxTweenSpeed = 100, WalkSpeed300 = false, EnemyTrackingESP = false,
-    AutoGetMobs = false, AutoAuraKillMobs = false, AutoGetBoss = false, AutoKillAuraBoss = false,
-    AutoClickSpecials = false, AutoPlayAgain = false, AutoPlayNextDifficulty = false, ClickDelayMS = 1
+-- --- CENTRAL RUNTIME CONFIGURATION ---
+_G.Config = {
+    TweenSpeed = 50,          
+    ESPEnabled = false,        
+    AutoKillMobs = false,      
+    AutoKillBosses = false,    
+    AutoClickSpecials = false, 
+    AutoPlayAgain = false,     
+    AutoNextDifficulty = false,
+    KillAuraRange = 25         
 }
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "OP_Perfect_Suite_V4"
-ScreenGui.ResetOnSpawn = false
-local pSuccess = pcall(function() ScreenGui.Parent = CoreGui end)
-if not pSuccess then pcall(function() ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end) end
-getgenv().OPSuite.Gui = ScreenGui
+-- --- DATA PERSISTENCE ENGINE (AUTO-SAVE & AUTO-LOAD) ---
+function _G.SaveConfig()
+    if writefile then
+        local success, encoded = pcall(HttpService.JSONEncode, HttpService, _G.Config)
+        if success then writefile(FILE_NAME, encoded) end
+    end
+end
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 340, 0, 480)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -240)
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 12)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
+local function LoadConfig()
+    if readfile and isfile and isfile(FILE_NAME) then
+        local success, decoded = pcall(HttpService.JSONDecode, HttpService, readfile(FILE_NAME))
+        if success and type(decoded) == "table" then
+            for key, value in pairs(decoded) do _G.Config[key] = value end
+            print("[LOADED] Last saved settings restored successfully!")
+        end
+    else
+        _G.SaveConfig()
+    end
+end
+LoadConfig()
 
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 8)
-UICorner.Parent = MainFrame
+-- --- CORE SPATIAL TARGETING LOGIC ---
+function _G.GetCharacter()
+    return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+end
 
-local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Color3.fromRGB(255, 0, 85)
-UIStroke.Thickness = 2
-UIStroke.Parent = MainFrame
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "★ DUNGEON HEROES MASTER HARVESTER ★"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 14
-Title.Font = Enum.Font.SourceSansBold
-Title.BackgroundTransparency = 1
-Title.Parent = MainFrame
-
-local Scroll = Instance.new("ScrollingFrame")
-Scroll.Size = UDim2.new(1, -20, 1, -160)
-Scroll.Position = UDim2.new(0, 10, 0, 45)
-Scroll.BackgroundColor3 = Color3.fromRGB(5, 5, 7)
-Scroll.BorderSizePixel = 0
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 600)
-Scroll.ScrollBarThickness = 5
-Scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 0, 85)
-Scroll.Parent = MainFrame
-getgenv().OPSuite.ScrollContainer = Scroll
-
-local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.Padding = UDim.new(0, 6)
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Parent = Scroll
-
-local LogScroll = Instance.new("ScrollingFrame")
-LogScroll.Size = UDim2.new(1, -20, 0, 100)
-LogScroll.Position = UDim2.new(0, 10, 1, -110)
-LogScroll.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-LogScroll.BorderSizePixel = 1
-LogScroll.CanvasSize = UDim2.new(0, 0, 0, 1000)
-LogScroll.Parent = MainFrame
-
-local LogBox = Instance.new("TextLabel")
-LogBox.Size = UDim2.new(1, -10, 1, 0)
-LogBox.BackgroundTransparency = 1
-LogBox.Text = "[PART 1 LOGGED SUCCESSFULLY - READY FOR PART 2]"
-LogBox.TextColor3 = Color3.fromRGB(0, 255, 100)
-LogBox.TextSize = 11
-LogBox.Font = Enum.Font.Code
-LogBox.TextXAlignment = Enum.TextXAlignment.Left
-LogBox.TextYAlignment = Enum.TextYAlignment.Top
-LogBox.TextWrapped = true
-LogBox.Parent = LogScroll
-getgenv().LogBox = LogBox
-
-function getgenv().OPSuite.createToggle(text, configKey)
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(1, -10, 0, 36)
-    Button.BorderSizePixel = 0
-    Button.Font = Enum.Font.SourceSansSemiBold
-    Button.TextSize = 13
-    Button.Parent = getgenv().OPSuite.ScrollContainer
+function _G.GetClosestEnemy(lookForBoss)
+    local char = _G.GetCharacter()
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
     
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 4)
-    Corner.Parent = Button
+    local closest = nil
+    local shortestDistance = math.huge
+    local enemyFolder = Workspace:FindFirstChild("Enemies") or Workspace:FindFirstChild("Mobs") or Workspace
     
-    local function refresh()
-        if getgenv().OPSuite.Config[configKey] then
-            Button.BackgroundColor3 = Color3.fromRGB(255, 0, 85)
-            Button.Text = text .. " : ACTIVE"
-            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-        else
-            Button.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-            Button.Text = text .. " : INACTIVE"
-            Button.TextColor3 = Color3.fromRGB(140, 140, 140)
+    for _, obj in pairs(enemyFolder:GetChildren()) do
+        if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
+            local isBoss = obj:SetAttribute("IsBoss") or string.find(string.lower(obj.Name), "boss")
+            if obj.Humanoid.Health > 0 and (not lookForBoss or (lookForBoss and isBoss)) then
+                local dist = (char.HumanoidRootPart.Position - obj.HumanoidRootPart.Position).Magnitude
+                if dist < shortestDistance then
+                    closest = obj
+                    shortestDistance = dist
+                end
+            end
         end
     end
-    refresh()
-    
-    Button.MouseButton1Click:Connect(function()
-        pcall(function()
-            getgenv().OPSuite.Config[configKey] = not getgenv().OPSuite.Config[configKey]
-            refresh()
-        end)
-    end)
+    return closest
 end
+
+-- --- COMPACT VELOCITY INTERPOLATION SYSTEM ---
+function _G.TweenTo(targetPosition)
+    local char = _G.GetCharacter()
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    
+    if _G.Config.TweenSpeed >= 100 then
+        root.CFrame = CFrame.new(targetPosition)
+        return
+    end
+    
+    local distance = (root.Position - targetPosition).Magnitude
+    local duration = distance / _G.Config.TweenSpeed
+    local startTime = os.clock()
+    local startPos = root.Position
+    
+    while os.clock() - startTime < duration and (_G.Config.AutoKillMobs or _G.Config.AutoKillBosses) do
+        local t = (os.clock() - startTime) / duration
+        root.CFrame = CFrame.new(startPos:Lerp(targetPosition, t))
+        RunService.Heartbeat:Wait()
+    end
+end
+
+-- --- DRAWING OVERLAY SYSTEM (ESP BOXES) ---
+local VisualBoxes = {}
+RunService.RenderStepped:Connect(function()
+    if not _G.Config.ESPEnabled then
+        for _, box in pairs(VisualBoxes) do box.Visible = false end
+        return
+    end
+    
+    local enemyFolder = Workspace:FindFirstChild("Enemies") or Workspace:FindFirstChild("Mobs") or Workspace
+    for _, enemy in pairs(enemyFolder:GetChildren()) do
+        if enemy:IsA("Model") and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+            if enemy ~= _G.GetCharacter() then
+                local rootPart = enemy.HumanoidRootPart
+                local vector, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+                
+                if onScreen then
+                    local box = VisualBoxes[enemy]
+                    if not box then
+                        box = Drawing.new("Square")
+                        box.Color = Color3.fromRGB(255, 0, 0)
+                        box.Thickness = 2
+                        box.Filled = false
+                        VisualBoxes[enemy] = box
+                    end
+                    
+                    local sizeY = (Camera:WorldToViewportPoint(rootPart.Position + Vector3.new(0, 3, 0)).Y - Camera:WorldToViewportPoint(rootPart.Position - Vector3.new(0, 3, 0)).Y)
+                    local sizeX = sizeY * 0.6
+                    
+                    box.Size = Vector2.new(sizeX, sizeY)
+                    box.Position = Vector2.new(vector.X - sizeX / 2, vector.Y - sizeY / 2)
+                    box.Visible = true
+                else
+                    if VisualBoxes[enemy] then VisualBoxes[enemy].Visible = false end
+                end
+            end
+        end
+    end
+end)
+
+print("[PART 1 SYSTEM] Core engine online.")
 
