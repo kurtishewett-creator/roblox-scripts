@@ -1,5 +1,5 @@
 --===================================================================================--
---               DUNGEON HEROES AUTOMATION MATRIX - PART 1 OF 2                      --
+--               DUNGEON HEROES AUTOMATION MATRIX - PART 1 OF 3                      --
 --===================================================================================--
 
 local Players = game:GetService("Players")
@@ -9,10 +9,10 @@ local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local CONFIG_FILE = "DungeonHeroes_Perfect_V4.json"
 
--- Clear old UI if it exists
-if _G.OPSuite and _G.OPSuite.Gui then _G.OPSuite.Gui:Destroy() end
+if _G.OPSuite and _G.OPSuite.Gui then 
+    _G.OPSuite.Gui:Destroy() 
+end
 
--- Global Setup Holder
 _G.OPSuite = {}
 _G.OPSuite.Config = {
     TweenSpeedHack = false,
@@ -45,7 +45,6 @@ local function loadSettings()
 end
 loadSettings()
 
--- GUI Initialization
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "OP_Perfect_Suite_V4"
 ScreenGui.ResetOnSpawn = false
@@ -107,7 +106,7 @@ LogScroll.Parent = MainFrame
 local LogBox = Instance.new("TextLabel")
 LogBox.Size = UDim2.new(1, -10, 1, 0)
 LogBox.BackgroundTransparency = 1
-LogBox.Text = "[PART 1 SUCCESSFUL - RUN PART 2 NEXT]"
+LogBox.Text = "[PART 1 SUCCESSFUL - PROCEED TO RUN PART 2]"
 LogBox.TextColor3 = Color3.fromRGB(0, 255, 100)
 LogBox.TextSize = 11
 LogBox.Font = Enum.Font.Code
@@ -151,41 +150,32 @@ function _G.OPSuite.createToggle(text, configKey)
     end)
 end
 
-print("[PART 1] Interface initialized. Waiting for Part 2...")
+print("[PART 1] Core framework online.")
 --===================================================================================--
---               DUNGEON HEROES AUTOMATION MATRIX - PART 2 OF 2                      --
+--               DUNGEON HEROES AUTOMATION MATRIX - PART 2 OF 3                      --
 --===================================================================================--
 
 if not _G.OPSuite or not _G.OPSuite.Config then
-    warn("ERROR: Please run Part 1 before executing Part 2!")
+    warn("CRITICAL ERROR: Run Part 1 before running Part 2!")
     return
 end
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 local LocalPlayer = Players.LocalPlayer
-
 local Config = _G.OPSuite.Config
 
-local function reportError(msg)
-    pcall(function()
-        if _G.LogBox then _G.LogBox.Text = _G.LogBox.Text .. "\n[ERROR] " .. tostring(msg) end
-    end)
-end
-
 -- Target Finder Engine
-local function findUltimateTarget(lookForBoss)
+function _G.OPSuite.findUltimateTarget(lookForBoss)
     local bestTarget = nil
     local shortestDistance = math.huge
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
     local myRoot = char.HumanoidRootPart
 
-    local structuralFolders = {"Enemies", "Mobs", "Monsters", "Baddies", "NPCs"}
-    for _, folderName in ipairs(structuralFolders) do
+    local folders = {"Enemies", "Mobs", "Monsters", "Baddies", "NPCs"}
+    for _, folderName in ipairs(folders) do
         local directory = Workspace:FindFirstChild(folderName)
         if directory then
             for _, obj in pairs(directory:GetChildren()) do
@@ -193,7 +183,10 @@ local function findUltimateTarget(lookForBoss)
                     local isBoss = obj:SetAttribute("Boss") or string.find(string.lower(obj.Name), "boss")
                     if (lookForBoss and isBoss) or (not lookForBoss and not isBoss) then
                         local dist = (obj.HumanoidRootPart.Position - myRoot.Position).Magnitude
-                        if dist < shortestDistance then shortestDistance = dist bestTarget = obj end
+                        if dist < shortestDistance then 
+                            shortestDistance = dist 
+                            bestTarget = obj 
+                        end
                     end
                 end
             end
@@ -207,7 +200,10 @@ local function findUltimateTarget(lookForBoss)
                     local isBoss = obj:SetAttribute("Boss") or string.find(string.lower(obj.Name), "boss")
                     if (lookForBoss and isBoss) or (not lookForBoss and not isBoss) then
                         local dist = (obj.HumanoidRootPart.Position - myRoot.Position).Magnitude
-                        if dist < shortestDistance then shortestDistance = dist bestTarget = obj end
+                        if dist < shortestDistance then 
+                            shortestDistance = dist 
+                            bestTarget = obj 
+                        end
                     end
                 end
             end
@@ -216,7 +212,7 @@ local function findUltimateTarget(lookForBoss)
     return bestTarget
 end
 
--- Speed Loop
+-- Walkspeed System Loop
 task.spawn(function()
     while task.wait(0.2) do
         pcall(function()
@@ -228,8 +224,8 @@ task.spawn(function()
     end
 end)
 
--- Teleport Engine
-local function teleportCombatOffset(pos)
+-- Teleport Engine Vector Offset 
+function _G.OPSuite.teleportCombatOffset(pos)
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     local root = char.HumanoidRootPart
@@ -247,30 +243,55 @@ local function teleportCombatOffset(pos)
     end
 end
 
--- Main Combat Automation
+if _G.LogBox then _G.LogBox.Text = "[PART 2 SUCCESSFUL - PROCEED TO RUN PART 3]" end
+print("[PART 2] Target engines loaded successfully.")
+--===================================================================================--
+--               DUNGEON HEROES AUTOMATION MATRIX - PART 3 OF 3                      --
+--===================================================================================--
+
+if not _G.OPSuite or not _G.OPSuite.findUltimateTarget then
+    warn("CRITICAL ERROR: Run Parts 1 and 2 before running Part 3!")
+    return
+end
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local LocalPlayer = Players.LocalPlayer
+local Config = _G.OPSuite.Config
+
+-- Main Harvest Combat Loop
 task.spawn(function()
     while task.wait(0.02) do
         pcall(function()
             local char = LocalPlayer.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
                 if Config.AutoGetBoss then
-                    local targetBoss = findUltimateTarget(true)
+                    local targetBoss = _G.OPSuite.findUltimateTarget(true)
                     if targetBoss and targetBoss:FindFirstChild("HumanoidRootPart") then
-                        teleportCombatOffset(targetBoss.HumanoidRootPart.Position + Vector3.new(0, 3, 0))
+                        _G.OPSuite.teleportCombatOffset(targetBoss.HumanoidRootPart.Position + Vector3.new(0, 3, 0))
                         if Config.AutoKillAuraBoss then
                             local weapon = char:FindFirstChildOfClass("Tool") or LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
-                            if weapon then if weapon.Parent ~= char then weapon.Parent = char end weapon:Activate() end
+                            if weapon then 
+                                if weapon.Parent ~= char then weapon.Parent = char end 
+                                weapon:Activate() 
+                            end
                         end
                     end
                 end
                 
-                if Config.AutoGetMobs and not (Config.AutoGetBoss and findUltimateTarget(true)) then
-                    local targetMob = findUltimateTarget(false)
+                if Config.AutoGetMobs and not (Config.AutoGetBoss and _G.OPSuite.findUltimateTarget(true)) then
+                    local targetMob = _G.OPSuite.findUltimateTarget(false)
                     if targetMob and targetMob:FindFirstChild("HumanoidRootPart") then
-                        teleportCombatOffset(targetMob.HumanoidRootPart.Position + Vector3.new(0, 3, 0))
+                        _G.OPSuite.teleportCombatOffset(targetMob.HumanoidRootPart.Position + Vector3.new(0, 3, 0))
                         if Config.AutoAuraKillMobs then
                             local weapon = char:FindFirstChildOfClass("Tool") or LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
-                            if weapon then if weapon.Parent ~= char then weapon.Parent = char end weapon:Activate() end
+                            if weapon then 
+                                if weapon.Parent ~= char then weapon.Parent = char end 
+                                weapon:Activate() 
+                            end
                         end
                     end
                 end
@@ -279,7 +300,7 @@ task.spawn(function()
     end
 end)
 
--- Ability Clicker
+-- Multi-Key High Frequency Clicker
 task.spawn(function()
     local keysToSpam = {Enum.KeyCode.E, Enum.KeyCode.R, Enum.KeyCode.F, Enum.KeyCode.X, Enum.KeyCode.C}
     while true do
@@ -296,7 +317,7 @@ task.spawn(function()
     end
 end)
 
--- Screen UI Auto-Scraper (Play Again)
+-- Screen Auto Re-Queuer
 task.spawn(function()
     while task.wait(1) do
         if Config.AutoPlayAgain or Config.AutoPlayNextDifficulty then
@@ -322,7 +343,7 @@ task.spawn(function()
     end
 end)
 
--- ESP Engine
+-- Render-Stepped Box Tracker (ESP)
 RunService.RenderStepped:Connect(function()
     pcall(function()
         for _, descendant in pairs(Workspace:GetDescendants()) do
@@ -349,7 +370,7 @@ RunService.RenderStepped:Connect(function()
     end)
 end)
 
--- Build the Buttons
+-- Button Compiler Elements Injection
 _G.OPSuite.createToggle("Toggle Walkspeed 300", "WalkSpeed300")
 _G.OPSuite.createToggle("Toggle Tween Teleportation", "TweenSpeedHack")
 _G.OPSuite.createToggle("Toggle Deep Box ESP", "EnemyTrackingESP")
@@ -362,4 +383,4 @@ _G.OPSuite.createToggle("Toggle Auto Replay Match", "AutoPlayAgain")
 _G.OPSuite.createToggle("Toggle Auto Next Difficulty", "AutoPlayNextDifficulty")
 
 if _G.LogBox then _G.LogBox.Text = "[SYSTEM FULLY OPERATIONAL AND ARMED]" end
-print("[PART 2] Completed successfully.")
+print("[PART 3] Script activation successful.")
