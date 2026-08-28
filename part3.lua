@@ -70,7 +70,7 @@ task.spawn(function()
     end
 end)
 
--- Screen Auto Re-Queuer
+-- Screen Auto Re-Queuer (Fixed for Delta compatibility)
 task.spawn(function()
     while task.wait(1) do
         if Config.AutoPlayAgain or Config.AutoPlayNextDifficulty then
@@ -82,11 +82,11 @@ task.spawn(function()
                             local lowerText = string.lower(child.Text)
                             local lowerName = string.lower(child.Name)
                             if Config.AutoPlayAgain and (string.find(lowerText, "again") or string.find(lowerName, "again") or string.find(lowerText, "replay")) then
-                                local click = getconnections or child.MouseButton1Click
-                                if type(click) == "table" then for _, c in pairs(click) do c:Fire() end else child:SimulateClick() end
+                                child:SimulateClick()
+                                pcall(function() child.MouseButton1Click:Fire() end)
                             elseif Config.AutoPlayNextDifficulty and (string.find(lowerText, "next") or string.find(lowerName, "next") or string.find(lowerText, "diff")) then
-                                local click = getconnections or child.MouseButton1Click
-                                if type(click) == "table" then for _, c in pairs(click) do c:Fire() end else child:SimulateClick() end
+                                child:SimulateClick()
+                                pcall(function() child.MouseButton1Click:Fire() end)
                             end
                         end
                     end
