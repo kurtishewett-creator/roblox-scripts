@@ -1,8 +1,4 @@
---===================================================================================--
---               DUNGEON HEROES AUTOMATION MATRIX - PART 3 OF 3                      --
---===================================================================================--
-
-if not _G.OPSuite or not _G.OPSuite.findUltimateTarget then
+if not getgenv().OPSuite or not getgenv().OPSuite.findUltimateTarget then
     warn("CRITICAL ERROR: Run Parts 1 and 2 before running Part 3!")
     return
 end
@@ -11,20 +7,18 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-
 local LocalPlayer = Players.LocalPlayer
-local Config = _G.OPSuite.Config
+local Config = getgenv().OPSuite.Config
 
--- Main Harvest Combat Loop
 task.spawn(function()
     while task.wait(0.02) do
         pcall(function()
             local char = LocalPlayer.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
                 if Config.AutoGetBoss then
-                    local targetBoss = _G.OPSuite.findUltimateTarget(true)
+                    local targetBoss = getgenv().OPSuite.findUltimateTarget(true)
                     if targetBoss and targetBoss:FindFirstChild("HumanoidRootPart") then
-                        _G.OPSuite.teleportCombatOffset(targetBoss.HumanoidRootPart.Position + Vector3.new(0, 3, 0))
+                        getgenv().OPSuite.teleportCombatOffset(targetBoss.HumanoidRootPart.Position + Vector3.new(0, 3, 0))
                         if Config.AutoKillAuraBoss then
                             local weapon = char:FindFirstChildOfClass("Tool") or LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
                             if weapon then 
@@ -35,10 +29,10 @@ task.spawn(function()
                     end
                 end
                 
-                if Config.AutoGetMobs and not (Config.AutoGetBoss and _G.OPSuite.findUltimateTarget(true)) then
-                    local targetMob = _G.OPSuite.findUltimateTarget(false)
+                if Config.AutoGetMobs and not (Config.AutoGetBoss and getgenv().OPSuite.findUltimateTarget(true)) then
+                    local targetMob = getgenv().OPSuite.findUltimateTarget(false)
                     if targetMob and targetMob:FindFirstChild("HumanoidRootPart") then
-                        _G.OPSuite.teleportCombatOffset(targetMob.HumanoidRootPart.Position + Vector3.new(0, 3, 0))
+                        getgenv().OPSuite.teleportCombatOffset(targetMob.HumanoidRootPart.Position + Vector3.new(0, 3, 0))
                         if Config.AutoAuraKillMobs then
                             local weapon = char:FindFirstChildOfClass("Tool") or LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
                             if weapon then 
@@ -53,7 +47,6 @@ task.spawn(function()
     end
 end)
 
--- Multi-Key High Frequency Clicker
 task.spawn(function()
     local keysToSpam = {Enum.KeyCode.E, Enum.KeyCode.R, Enum.KeyCode.F, Enum.KeyCode.X, Enum.KeyCode.C}
     while true do
@@ -70,7 +63,6 @@ task.spawn(function()
     end
 end)
 
--- Screen Auto Re-Queuer (Fixed for Delta compatibility)
 task.spawn(function()
     while task.wait(1) do
         if Config.AutoPlayAgain or Config.AutoPlayNextDifficulty then
@@ -82,10 +74,8 @@ task.spawn(function()
                             local lowerText = string.lower(child.Text)
                             local lowerName = string.lower(child.Name)
                             if Config.AutoPlayAgain and (string.find(lowerText, "again") or string.find(lowerName, "again") or string.find(lowerText, "replay")) then
-                                child:SimulateClick()
                                 pcall(function() child.MouseButton1Click:Fire() end)
                             elseif Config.AutoPlayNextDifficulty and (string.find(lowerText, "next") or string.find(lowerName, "next") or string.find(lowerText, "diff")) then
-                                child:SimulateClick()
                                 pcall(function() child.MouseButton1Click:Fire() end)
                             end
                         end
@@ -96,7 +86,6 @@ task.spawn(function()
     end
 end)
 
--- Render-Stepped Box Tracker (ESP)
 RunService.RenderStepped:Connect(function()
     pcall(function()
         for _, descendant in pairs(Workspace:GetDescendants()) do
@@ -123,17 +112,15 @@ RunService.RenderStepped:Connect(function()
     end)
 end)
 
--- Button Compiler Elements Injection
-_G.OPSuite.createToggle("Toggle Walkspeed 300", "WalkSpeed300")
-_G.OPSuite.createToggle("Toggle Tween Teleportation", "TweenSpeedHack")
-_G.OPSuite.createToggle("Toggle Deep Box ESP", "EnemyTrackingESP")
-_G.OPSuite.createToggle("Toggle Auto Detect Mobs", "AutoGetMobs")
-_G.OPSuite.createToggle("Toggle Auto Kill Aura Mobs", "AutoAuraKillMobs")
-_G.OPSuite.createToggle("Toggle Auto Detect Bosses", "AutoGetBoss")
-_G.OPSuite.createToggle("Toggle Auto Kill Aura Bosses", "AutoKillAuraBoss")
-_G.OPSuite.createToggle("Toggle Auto Special Spam [E,R,F,X,C]", "AutoClickSpecials")
-_G.OPSuite.createToggle("Toggle Auto Replay Match", "AutoPlayAgain")
-_G.OPSuite.createToggle("Toggle Auto Next Difficulty", "AutoPlayNextDifficulty")
+getgenv().OPSuite.createToggle("Toggle Walkspeed 300", "WalkSpeed300")
+getgenv().OPSuite.createToggle("Toggle Tween Teleportation", "TweenSpeedHack")
+getgenv().OPSuite.createToggle("Toggle Deep Box ESP", "EnemyTrackingESP")
+getgenv().OPSuite.createToggle("Toggle Auto Detect Mobs", "AutoGetMobs")
+getgenv().OPSuite.createToggle("Toggle Auto Kill Aura Mobs", "AutoAuraKillMobs")
+getgenv().OPSuite.createToggle("Toggle Auto Detect Bosses", "AutoGetBoss")
+getgenv().OPSuite.createToggle("Toggle Auto Kill Aura Bosses", "AutoKillAuraBoss")
+getgenv().OPSuite.createToggle("Toggle Auto Special Spam [E,R,F,X,C]", "AutoClickSpecials")
+getgenv().OPSuite.createToggle("Toggle Auto Replay Match", "AutoPlayAgain")
+getgenv().OPSuite.createToggle("Toggle Auto Next Difficulty", "AutoPlayNextDifficulty")
 
-if _G.LogBox then _G.LogBox.Text = "[SYSTEM FULLY OPERATIONAL AND ARMED]" end
-print("[PART 3] Script activation successful.")
+if getgenv().LogBox then getgenv().LogBox.Text = "[SYSTEM FULLY OPERATIONAL AND ARMED]" end
